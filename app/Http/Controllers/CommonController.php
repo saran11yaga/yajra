@@ -19,18 +19,35 @@ class CommonController extends Controller
     {
         if ($request->ajax()) {
             $data = $CustomModel->getAllUserHobbies();
-            
-            return Datatables::of($data)
+            $formatted_data = json_decode($data,TRUE); 
+            $records = [];
+            foreach($formatted_data as $k=>$val){
+                if(!empty($val['hobbies'])){
+                    $hobbie_id = array_column($val['hobbies'], 'id');
+                    $hids = implode(",",$hobbie_id);
+
+                    $hobbie_name = array_column($val['hobbies'], 'hobbie_name');
+                    $hnames = implode(",",$hobbie_name);
+                    
+                    $records[] = (object)[
+                                    'user_id' => $val['id'],
+                                    'first_name'=> $val['first_name'],
+                                    'last_name'=> $val['last_name'],
+                                    'hobbies_id' => $hids,
+                                    'hobbies_name' => $hnames
+                    ];
+                }
+                
+            }
+            return Datatables::of($records)
             ->addIndexColumn()
             ->addColumn('action', function($row){
                 $actionBtn = '<a href="javascript:void(0)" class="edit btn btn-success btn-sm" id="editBtn" onClick="editFunc('.$row->user_id.')">Edit</a> <a href="javascript:void(0)" class="delete btn btn-danger btn-sm"  onClick="deleteFunc('.$row->user_id.')" id="deleteBtn">Delete</a>';
                 return $actionBtn;
             })
-            //->addColumn('action', 'user-action')
             ->rawColumns(['action'])
             ->make(true);
         }
-        // return view('list', compact('data'));
         return view('user');
 
     }
@@ -145,6 +162,23 @@ class CommonController extends Controller
     {
         $input = $request->all();
          $data = $CustomModel->getUserHobbies($input['user_id']);
+          $val = json_decode($data,TRUE); 
+         
+          if(!empty($val['hobbies'])){
+            $hobbie_id = array_column($val['hobbies'], 'id');
+            $hids = implode(",",$hobbie_id);
+
+            $hobbie_name = array_column($val['hobbies'], 'hobbie_name');
+            $hnames = implode(",",$hobbie_name);
+          }
+
+          $data = (object)[
+            'user_id' => $val['id'],
+            'first_name'=> $val['first_name'],
+            'last_name'=> $val['last_name'],
+            'hobbies_id' => $hids,
+            'hobbies_name' => $hnames
+        ];
          return Response()->json($data);
     }
 
